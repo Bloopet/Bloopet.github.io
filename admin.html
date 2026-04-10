@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloopet Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#080e1c;color:#d0e4ff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+nav{background:linear-gradient(135deg,#0a1628,#0d1b3e);border-bottom:2px solid #1a6cf5;padding:0 24px;height:52px;display:flex;align-items:center;gap:16px}
+.nav-brand{font-size:1.1em;font-weight:900;color:#4aa8ff;letter-spacing:.05em}
+.nav-badge{background:#f55;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;letter-spacing:.08em}
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 52px);padding:20px}
+.login-box{background:linear-gradient(145deg,#0e2140,#112b50);border:1.5px solid #1a6cf5;border-radius:16px;padding:36px 32px;width:100%;max-width:360px;text-align:center}
+.login-box h2{color:#4aa8ff;font-size:1.3em;margin-bottom:8px}
+.login-box p{color:#6a90c8;font-size:.9em;margin-bottom:24px}
+.login-box input{width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(26,108,245,.4);border-radius:10px;color:#d0e4ff;padding:11px 14px;font-size:.95em;margin-bottom:12px;outline:none}
+.login-box input:focus{border-color:#1a6cf5}
+.btn{background:#1a6cf5;border:none;border-radius:10px;color:#fff;cursor:pointer;font-size:.95em;font-weight:700;padding:11px 20px;transition:background .15s}
+.btn:hover{background:#1558cc}
+.btn.danger{background:rgba(255,80,80,.25);border:1px solid #f55;color:#f88}
+.btn.danger:hover{background:rgba(255,80,80,.45)}
+.btn.sm{padding:6px 14px;font-size:.82em}
+#admin-screen{display:none;padding:24px}
+.tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+.tab-btn{background:rgba(255,255,255,.06);border:1.5px solid rgba(26,108,245,.3);border-radius:10px;color:#8ab4f8;cursor:pointer;font-size:.88em;font-weight:700;padding:8px 18px;transition:all .15s}
+.tab-btn.active,.tab-btn:hover{background:#1a6cf5;border-color:#1a6cf5;color:#fff}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:linear-gradient(145deg,#0e2140,#112b50);border:1.5px solid rgba(26,108,245,.3);border-radius:14px;padding:20px;margin-bottom:16px}
+.card h3{color:#4aa8ff;font-size:.95em;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:20px}
+.stat-tile{background:rgba(26,108,245,.12);border:1px solid rgba(26,108,245,.25);border-radius:12px;padding:14px;text-align:center}
+.stat-tile .n{font-size:1.8em;font-weight:900;color:#4aa8ff}
+.stat-tile .l{font-size:.75em;color:#6a90c8;margin-top:3px}
+table{width:100%;border-collapse:collapse}
+th{color:#4aa8ff;font-size:.78em;padding:8px 10px;text-align:left;border-bottom:1px solid rgba(26,108,245,.3)}
+td{padding:8px 10px;font-size:.85em;border-bottom:1px solid rgba(255,255,255,.05);color:#b0cce8}
+tr:last-child td{border-bottom:none}
+.form-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.form-row input,.form-row select{background:rgba(255,255,255,.07);border:1.5px solid rgba(26,108,245,.4);border-radius:8px;color:#d0e4ff;padding:9px 12px;font-size:.88em;flex:1;min-width:140px;outline:none}
+.form-row input:focus,.form-row select:focus{border-color:#1a6cf5}
+.err{color:#f88;font-size:.85em;margin-top:6px}
+.success{color:#4af5a0;font-size:.85em;margin-top:6px}
+.tag{background:rgba(26,108,245,.2);border-radius:6px;color:#8ab4f8;font-size:.75em;padding:2px 8px;display:inline-block}
+</style>
+</head>
+<body>
+<nav>
+  <span class="nav-brand">🎮 Bloopet</span>
+  <span class="nav-badge">ADMIN</span>
+  <span id="nav-user" style="margin-left:auto;color:#6a90c8;font-size:.85em"></span>
+  <button class="btn sm" id="logout-btn" style="display:none" onclick="logout()">Logout</button>
+</nav>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div style="font-size:2.5em;margin-bottom:.5em">🔐</div>
+    <h2>Admin Panel</h2>
+    <!-- Login mode tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:18px">
+      <button id="login-tab-key" onclick="switchLoginTab('key')" style="flex:1;background:#1a6cf5;border:none;border-radius:8px;color:#fff;font-size:.82em;font-weight:700;padding:8px;cursor:pointer">🔑 Admin Key</button>
+      <button id="login-tab-account" onclick="switchLoginTab('account')" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(26,108,245,.4);border-radius:8px;color:#8ab4f8;font-size:.82em;font-weight:700;padding:8px;cursor:pointer">👤 My Account</button>
+    </div>
+    <!-- Key login -->
+    <div id="login-key-form">
+      <p style="margin-bottom:12px">Enter the master admin key</p>
+      <input type="password" id="key-input" placeholder="Admin key" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn" style="width:100%" onclick="doLogin()">Login with Key</button>
+    </div>
+    <!-- Account login (for users who have been granted access) -->
+    <div id="login-account-form" style="display:none">
+      <p style="margin-bottom:12px;color:#6a90c8;font-size:.88em">If you have been granted admin access, log in with your Bloopet account</p>
+      <input type="text" id="acc-username" placeholder="Username" autocomplete="off" style="margin-bottom:8px" onkeydown="if(event.key==='Enter')document.getElementById('acc-password').focus()">
+      <input type="password" id="acc-password" placeholder="Password" autocomplete="off" onkeydown="if(event.key==='Enter')doAccountLogin()">
+      <button class="btn" style="width:100%" onclick="doAccountLogin()">Login with Account</button>
+    </div>
+    <div class="err" id="login-err" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<div id="admin-screen">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="tab('stats')">📊 Stats</button>
+    <button class="tab-btn" onclick="tab('users')">👤 Users</button>
+    <button class="tab-btn" onclick="tab('rooms')">🎮 Live Rooms</button>
+    <button class="tab-btn" onclick="tab('announce')">📢 Announcement</button>
+    <button class="tab-btn" onclick="tab('subs')">📬 Submissions</button>
+    <button class="tab-btn" onclick="tab('secret')">🔒 Secret Games</button>
+  </div>
+
+  <!-- Stats Panel -->
+  <div id="panel-stats" class="panel active">
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="card">
+      <h3>🏆 Top Games <span style="font-size:.75em;color:#4a6aa0;font-weight:400;margin-left:8px">Click a row to reset its plays</span></h3>
+      <table><thead><tr><th>#</th><th>Game ID</th><th>Plays</th><th>Reset</th></tr></thead>
+      <tbody id="top-games-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- Users Panel -->
+  <div id="panel-users" class="panel">
+    <div class="card">
+      <h3>👤 Registered Users</h3>
+      <table><thead><tr><th>Avatar</th><th>Username</th><th>Tags</th><th>Personal Banner</th><th>Action</th></tr></thead>
+      <tbody id="users-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- Live Rooms Panel -->
+  <div id="panel-rooms" class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="color:#6a90c8;font-size:.85em">Active multiplayer rooms (refreshes every 10s)</div>
+      <button class="btn sm" onclick="loadRooms()">↻ Refresh</button>
+    </div>
+    <div id="rooms-list"><p style="color:#4a6aa0;text-align:center;padding:20px">Loading...</p></div>
+  </div>
+
+  <!-- Announcement Panel -->
+  <div id="panel-announce" class="panel">
+    <div class="card">
+      <h3>📢 Site Announcement Banner</h3>
+      <p style="color:#6a90c8;font-size:.85em;margin-bottom:14px">This text shows as a dismissible banner at the top of the homepage when active.</p>
+      <div style="margin-bottom:10px">
+        <textarea id="ann-text" placeholder="Announcement text (max 300 chars)..." style="width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(26,108,245,.4);border-radius:10px;color:#d0e4ff;padding:11px 14px;font-size:.9em;resize:vertical;min-height:80px;outline:none;font-family:inherit" maxlength="300" oninput="this.style.borderColor=''"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="setAnnouncement(true)">📢 Publish Banner</button>
+        <button class="btn danger" onclick="setAnnouncement(false)">✕ Clear / Deactivate</button>
+      </div>
+      <div id="ann-msg" style="margin-top:8px;font-size:.85em"></div>
+    </div>
+    <div class="card" id="ann-preview-card" style="display:none">
+      <h3>👁 Current Active Banner</h3>
+      <div id="ann-current" style="background:rgba(26,108,245,.15);border:1px solid rgba(26,108,245,.4);border-radius:10px;padding:12px 16px;color:#d0e4ff"></div>
+    </div>
+  </div>
+
+  <!-- Submissions Panel -->
+  <div id="panel-subs" class="panel">
+    <div class="card">
+      <h3>📬 Game Submissions</h3>
+      <div id="subs-list"></div>
+    </div>
+  </div>
+
+  <!-- Secret Games Panel -->
+  <div id="panel-secret" class="panel">
+    <div class="card">
+      <h3>➕ Add Secret Game</h3>
+      <div class="form-row">
+        <input id="sg-id"    placeholder="Unique ID (e.g. cool-game)" autocomplete="off">
+        <input id="sg-title" placeholder="Display title" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <input id="sg-url"   placeholder="Embed URL (https://...)" autocomplete="off">
+        <input id="sg-img"   placeholder="Thumbnail URL (optional)" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <select id="sg-cat">
+          <option value="Arcade">Arcade</option><option value="Puzzle">Puzzle</option>
+          <option value="Racing">Racing</option><option value="Platform">Platform</option>
+          <option value="Adventure">Adventure</option><option value="Sports">Sports</option>
+          <option value="Fighting">Fighting</option><option value="Music">Music</option>
+          <option value="Simulation">Simulation</option><option value="Other">Other</option>
+        </select>
+        <button class="btn" onclick="addSecretGame()">Add Game</button>
+      </div>
+      <div id="sg-msg"></div>
+    </div>
+    <div class="card">
+      <h3>🔒 Secret Games</h3>
+      <table><thead><tr><th>ID</th><th>Title</th><th>Category</th><th>Action</th></tr></thead>
+      <tbody id="secret-body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+var ADMIN_KEY  = '';
+var _userToken = '';
+var _isMaster  = false;
+
+function switchLoginTab(mode) {
+  var isKey = mode === 'key';
+  document.getElementById('login-key-form').style.display     = isKey ? 'block' : 'none';
+  document.getElementById('login-account-form').style.display = isKey ? 'none'  : 'block';
+  document.getElementById('login-tab-key').style.background     = isKey ? '#1a6cf5' : 'rgba(255,255,255,.08)';
+  document.getElementById('login-tab-key').style.color          = isKey ? '#fff' : '#8ab4f8';
+  document.getElementById('login-tab-key').style.border         = isKey ? 'none' : '1px solid rgba(26,108,245,.4)';
+  document.getElementById('login-tab-account').style.background = isKey ? 'rgba(255,255,255,.08)' : '#1a6cf5';
+  document.getElementById('login-tab-account').style.color      = isKey ? '#8ab4f8' : '#fff';
+  document.getElementById('login-tab-account').style.border     = isKey ? '1px solid rgba(26,108,245,.4)' : 'none';
+  document.getElementById('login-err').textContent = '';
+}
+
+function authQuery() {
+  return _isMaster ? ('key=' + encodeURIComponent(ADMIN_KEY)) : ('token=' + encodeURIComponent(_userToken));
+}
+function authBody(obj) {
+  var base = _isMaster ? { key: ADMIN_KEY } : { token: _userToken };
+  return Object.assign({}, base, obj);
+}
+
+function enterAdmin(displayName, isMaster) {
+  _isMaster = isMaster;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'block';
+  document.getElementById('nav-user').textContent = displayName + (isMaster ? ' (Master)' : ' (Admin)');
+  document.getElementById('logout-btn').style.display = '';
+  loadStats();
+}
+
+function doLogin() {
+  var k = document.getElementById('key-input').value.trim();
+  document.getElementById('login-err').textContent = '';
+  fetch('/api/admin/check?key=' + encodeURIComponent(k))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        ADMIN_KEY = k; _userToken = ''; enterAdmin('Admin', true);
+      } else {
+        document.getElementById('login-err').textContent = 'Invalid admin key.';
+      }
+    }).catch(function() {
+      document.getElementById('login-err').textContent = 'Connection error.';
+    });
+}
+
+function doAccountLogin() {
+  var username = document.getElementById('acc-username').value.trim();
+  var password = document.getElementById('acc-password').value;
+  document.getElementById('login-err').textContent = '';
+  if (!username || !password) { document.getElementById('login-err').textContent = 'Enter username and password.'; return; }
+  fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username, password: password }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.token) { document.getElementById('login-err').textContent = d.error || 'Login failed.'; return; }
+      fetch('/api/admin/check?token=' + encodeURIComponent(d.token))
+        .then(function(r) { return r.json(); })
+        .then(function(ad) {
+          if (ad.ok) {
+            ADMIN_KEY = ''; _userToken = d.token; enterAdmin(d.username, false);
+          } else {
+            document.getElementById('login-err').textContent = 'Your account does not have admin access.';
+          }
+        });
+    }).catch(function() {
+      document.getElementById('login-err').textContent = 'Connection error.';
+    });
+}
+
+function logout() {
+  ADMIN_KEY = ''; _userToken = ''; _isMaster = false;
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('key-input').value = '';
+  document.getElementById('acc-password').value = '';
+}
+
+var _roomsTimer = null;
+function tab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('panel-' + name).classList.add('active');
+  if (_roomsTimer) { clearInterval(_roomsTimer); _roomsTimer = null; }
+  if (name === 'stats')    loadStats();
+  if (name === 'users')    { _usersCache = []; loadUsers(); }
+  if (name === 'rooms')    { loadRooms(); _roomsTimer = setInterval(loadRooms, 10000); }
+  if (name === 'announce') loadAnnouncement();
+  if (name === 'subs')     loadSubs();
+  if (name === 'secret')   loadSecretGames();
+}
+
+function loadStats() {
+  fetch('/api/admin/stats?' + authQuery())
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      document.getElementById('stat-grid').innerHTML =
+        tile(d.totalPlays, 'Total Plays') +
+        tile(d.totalUsers, 'Users') +
+        tile(d.onlineNow, 'Online Now') +
+        tile(d.topGames.length, 'Tracked Games');
+      var rows = '';
+      d.topGames.forEach(function(g, i) {
+        rows += '<tr><td>' + (i+1) + '</td><td><code style="color:#4aa8ff">' + esc(g.id) + '</code></td><td>' + g.count + '</td>' +
+          '<td><button class="btn danger sm" onclick="resetGameStat(\'' + esc(g.id) + '\')">Reset</button></td></tr>';
+      });
+      document.getElementById('top-games-body').innerHTML = rows || '<tr><td colspan="4" style="opacity:.5">No plays yet</td></tr>';
+      _usersCache = d.users;
+      _isMaster = !!d.isMasterAdmin;
+    });
+}
+
+function resetGameStat(id) {
+  if (!confirm('Reset all play counts for "' + id + '"?')) return;
+  fetch('/api/admin/stats/reset-game', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(authBody({ id: id })) })
+    .then(function() { loadStats(); });
+}
+
+function tile(n, l) {
+  return '<div class="stat-tile"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>';
+}
+
+var _usersCache = [];
+function loadUsers() {
+  fetch('/api/admin/stats?' + authQuery())
+    .then(function(r) { return r.json(); })
+    .then(function(d) { _usersCache = d.users; renderUsers(d.users); });
+}
+function renderUsers(users) {
+  var rows = '';
+  users.forEach(function(u) {
+    var ownerBadge = u.adminAccess ? '<span style="background:linear-gradient(135deg,rgba(255,180,0,.25),rgba(255,120,0,.2));color:#ffd166;border:1px solid rgba(255,180,0,.4);font-size:.65em;font-weight:800;padding:2px 7px;border-radius:8px;margin-left:6px;letter-spacing:.04em">👑 OWNER</span>' : '';
+    var bannedBadge = u.banned ? '<span style="background:rgba(220,38,38,.25);color:#f87171;border:1px solid rgba(220,38,38,.4);font-size:.65em;font-weight:800;padding:2px 7px;border-radius:8px;margin-left:6px">🚫 BANNED</span>' : '';
+
+    var tagPills = (u.tags || []).map(function(t) {
+      return '<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(74,168,255,.15);border:1px solid rgba(74,168,255,.3);color:#8ab4f8;font-size:.65em;font-weight:700;padding:2px 8px;border-radius:10px;margin:2px 2px 0 0">' +
+        esc(t) + '<button onclick="removeTag(\'' + esc(u.username) + '\',\'' + esc(t) + '\')" style="background:none;border:none;color:#f88;cursor:pointer;padding:0 0 0 2px;font-size:1em;line-height:1">×</button></span>';
+    }).join('');
+    var addTagForm = '<span style="display:inline-flex;align-items:center;gap:3px;margin-top:3px">' +
+      '<input id="tag-input-' + esc(u.username) + '" placeholder="new tag…" maxlength="24" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#e8eaed;padding:2px 6px;font-size:.7em;width:80px" onkeydown="if(event.key===\'Enter\')addTag(\'' + esc(u.username) + '\')">' +
+      '<button class="btn sm" onclick="addTag(\'' + esc(u.username) + '\')" style="padding:2px 7px;font-size:.7em">+</button></span>';
+
+    var bannerCell = '<div style="display:flex;flex-direction:column;gap:4px;min-width:160px">' +
+      (u.personalBanner
+        ? '<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:6px;padding:4px 8px;color:#fde68a;font-size:.75em;max-width:200px;word-break:break-word">' + esc(u.personalBanner) + '</div>' +
+          '<button class="btn danger sm" onclick="clearPersonalBanner(\'' + esc(u.username) + '\')" style="font-size:.7em;padding:2px 8px">Clear Banner</button>'
+        : '') +
+      '<div style="display:flex;gap:4px;margin-top:2px">' +
+        '<input id="banner-input-' + esc(u.username) + '" placeholder="Set a message…" maxlength="300" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#e8eaed;padding:3px 7px;font-size:.7em;flex:1;min-width:0" onkeydown="if(event.key===\'Enter\')setPersonalBanner(\'' + esc(u.username) + '\')">' +
+        '<button class="btn sm" onclick="setPersonalBanner(\'' + esc(u.username) + '\')" style="padding:2px 8px;font-size:.7em;background:rgba(251,191,36,.15);border-color:rgba(251,191,36,.4);color:#fde68a;white-space:nowrap">📢 Set</button>' +
+      '</div>' +
+    '</div>';
+
+    var accessBtn = '';
+    if (_isMaster) {
+      accessBtn = u.adminAccess
+        ? '<button class="btn danger sm" onclick="revokeAdmin(\'' + esc(u.username) + '\')" style="margin-bottom:4px;width:100%">Revoke Owner</button>'
+        : '<button class="btn sm" onclick="grantAdmin(\'' + esc(u.username) + '\')" style="background:rgba(255,180,0,.15);border-color:rgba(255,180,0,.5);color:#ffd166;margin-bottom:4px;width:100%">👑 Make Owner</button>';
+      var banBtn = u.banned
+        ? '<button class="btn sm" onclick="unbanUser(\'' + esc(u.username) + '\')" style="background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.4);color:#4ade80;margin-bottom:4px;width:100%">✅ Unban</button>'
+        : '<button class="btn danger sm" onclick="banUser(\'' + esc(u.username) + '\')" style="margin-bottom:4px;width:100%">🚫 Ban</button>';
+      var deleteBtn = '<button class="btn danger sm" onclick="deleteUser(\'' + esc(u.username||u.displayName) + '\')" style="width:100%">Delete</button>';
+      accessBtn = '<div style="display:flex;flex-direction:column;min-width:110px">' + accessBtn + banBtn + deleteBtn + '</div>';
+    }
+
+    rows += '<tr>' +
+      '<td style="font-size:1.3em">' + (u.avatar||'🎮') + '</td>' +
+      '<td>' + esc(u.displayName) + ownerBadge + bannedBadge +
+        (u.banned && u.banReason ? '<div style="color:#f87171;font-size:.7em;margin-top:2px">📝 ' + esc(u.banReason) + '</div>' : '') +
+      '</td>' +
+      '<td><div style="display:flex;flex-wrap:wrap;align-items:center;gap:0">' + tagPills + addTagForm + '</div></td>' +
+      '<td>' + bannerCell + '</td>' +
+      '<td>' + accessBtn + '</td></tr>';
+  });
+  document.getElementById('users-body').innerHTML = rows || '<tr><td colspan="5" style="opacity:.5">No users yet</td></tr>';
+}
+
+function grantAdmin(username) {
+  if (!confirm('Grant admin access to "' + username + '"? They will be able to log into the admin panel with their account.')) return;
+  fetch('/api/admin/users/grant-admin', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: ADMIN_KEY, username: username }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) loadUsers(); else alert(d.error || 'Failed.'); });
+}
+
+function revokeAdmin(username) {
+  if (!confirm('Revoke admin access from "' + username + '"?')) return;
+  fetch('/api/admin/users/revoke-admin', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: ADMIN_KEY, username: username }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) loadUsers(); else alert(d.error || 'Failed.'); });
+}
+
+function banUser(username) {
+  var reason = prompt('Ban reason (shown to user):', 'You have been banned.');
+  if (reason === null) return;
+  fetch('/api/admin/users/ban', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: ADMIN_KEY, username: username, reason: reason.trim() || 'You have been banned.' }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) loadUsers(); else alert(d.error || 'Failed.'); });
+}
+
+function unbanUser(username) {
+  if (!confirm('Unban "' + username + '"?')) return;
+  fetch('/api/admin/users/unban', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: ADMIN_KEY, username: username }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) loadUsers(); else alert(d.error || 'Failed.'); });
+}
+
+function setPersonalBanner(username) {
+  var inp = document.getElementById('banner-input-' + username);
+  var text = inp ? inp.value.trim() : '';
+  if (!text) { alert('Please type a message first.'); return; }
+  fetch('/api/admin/users/set-banner', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(authBody({ username: username, text: text })) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) loadUsers(); else alert(d.error || 'Failed.'); });
+}
+
+function clearPersonalBanner(username) {
+  fetch('/api/admin/users/clear-banner', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(authBody({ username: username })) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) loadUsers(); else alert(d.error || 'Failed.'); });
+}
+
+function addTag(username) {
+  var inp = document.getElementById('tag-input-' + username);
+  var tag = inp ? inp.value.trim() : '';
+  if (!tag) return;
+  fetch('/api/admin/users/add-tag', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(authBody({ username: username, tag: tag })) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) loadUsers(); else alert(d.error || 'Failed.'); });
+}
+
+function removeTag(username, tag) {
+  fetch('/api/admin/users/remove-tag', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(authBody({ username: username, tag: tag })) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) loadUsers(); else alert(d.error || 'Failed.'); });
+}
+
+function deleteUser(username) {
+  if (!confirm('Permanently delete user "' + username + '" and all their play data?')) return;
+  fetch('/api/admin/users/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: ADMIN_KEY, username: username }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) { _usersCache = []; loadUsers(); }
+      else alert(d.error || 'Failed to delete user.');
+    });
+}
+
+function loadRooms() {
+  fetch('/api/admin/rooms?' + authQuery())
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var el = document.getElementById('rooms-list');
+      if (!d.rooms || !d.rooms.length) {
+        el.innerHTML = '<div class="card" style="text-align:center;padding:30px"><div style="font-size:2em;margin-bottom:8px">🎮</div><div style="color:#4a6aa0">No active rooms right now</div><div style="color:#3a5888;font-size:.82em;margin-top:4px">' + d.onlineCount + ' user(s) online</div></div>';
+        return;
+      }
+      el.innerHTML = d.rooms.map(function(r) {
+        var ps = r.players.map(function(p) { return '<span style="background:rgba(26,108,245,.15);border-radius:6px;padding:3px 8px;font-size:.8em">' + p.avatar + ' ' + esc(p.username) + '</span>'; }).join(' ');
+        return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">' +
+          '<div><span style="font-size:1.5em;font-weight:900;color:#4aa8ff;letter-spacing:.15em">' + r.code + '</span>' +
+          (r.gameName ? ' &nbsp;<span style="color:#b0cce8;font-size:.88em">' + esc(r.gameName) + '</span>' : '') + '</div>' +
+          '<span style="color:#6a90c8;font-size:.78em">' + new Date(r.createdAt).toLocaleTimeString() + ' &bull; ' + r.msgCount + ' msg(s)</span></div>' +
+          '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' + (ps || '<span style="color:#4a6aa0;font-size:.82em">No players</span>') + '</div></div>';
+      }).join('');
+    }).catch(function() {
+      document.getElementById('rooms-list').innerHTML = '<p style="color:#f88;text-align:center">Failed to load rooms</p>';
+    });
+}
+
+function loadAnnouncement() {
+  fetch('/api/admin/announcement?' + authQuery())
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var pc = document.getElementById('ann-preview-card');
+      var ac = document.getElementById('ann-current');
+      if (d.active && d.text) {
+        document.getElementById('ann-text').value = d.text;
+        pc.style.display = 'block';
+        ac.textContent = d.text;
+      } else {
+        pc.style.display = 'none';
+      }
+    });
+}
+
+function setAnnouncement(active) {
+  var text = document.getElementById('ann-text').value.trim();
+  var msg = document.getElementById('ann-msg');
+  if (active && !text) { msg.className = 'err'; msg.textContent = 'Enter announcement text first.'; return; }
+  fetch('/api/admin/announcement', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(authBody({ text: text, active: active })) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        msg.className = 'success';
+        msg.textContent = active ? 'Banner published!' : 'Banner cleared.';
+        if (!active) document.getElementById('ann-text').value = '';
+        loadAnnouncement();
+        setTimeout(function() { msg.textContent = ''; }, 3000);
+      } else {
+        msg.className = 'err'; msg.textContent = d.error || 'Failed.';
+      }
+    });
+}
+
+function loadSubs() {
+  fetch('/api/admin/subs?' + authQuery())
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var html = '';
+      if (!d.subs.length) { html = '<p style="opacity:.5;text-align:center;padding:20px">No submissions yet</p>'; }
+      d.subs.forEach(function(s, i) {
+        html += '<div style="border:1px solid rgba(26,108,245,.2);border-radius:10px;padding:14px;margin-bottom:10px">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+        html += '<div>';
+        html += '<strong style="color:#e0eaff">' + esc(s.name) + '</strong> &nbsp;<span style="color:#6a90c8;font-size:.82em">' + esc(s.email) + '</span>';
+        if (s.url)  html += '<br><a href="' + esc(s.url) + '" target="_blank" style="color:#4aa8ff;font-size:.85em">' + esc(s.url) + '</a>';
+        if (s.cat)  html += ' &nbsp;<span class="tag">' + esc(s.cat) + '</span>';
+        if (s.desc) html += '<br><span style="color:#8ab4f8;font-size:.85em">' + esc(s.desc) + '</span>';
+        html += '<br><span style="color:#4a6aa0;font-size:.78em">' + (s.date ? new Date(s.date).toLocaleString() : '') + '</span>';
+        html += '</div>';
+        html += '<button class="btn danger sm" onclick="deleteSub(' + i + ')">Delete</button>';
+        html += '</div></div>';
+      });
+      document.getElementById('subs-list').innerHTML = html;
+    });
+}
+
+function deleteSub(i) {
+  if (!confirm('Delete this submission?')) return;
+  fetch('/api/admin/subs/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(authBody({ index: i })) })
+    .then(function() { loadSubs(); });
+}
+
+function loadSecretGames() {
+  fetch('/api/admin/secret-games?' + authQuery())
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var rows = '';
+      d.games.forEach(function(g) {
+        rows += '<tr><td><code style="color:#4aa8ff">' + esc(g.id) + '</code></td><td>' + esc(g.title) + '</td>' +
+          '<td><span class="tag">' + esc(g.cat||'Other') + '</span></td>' +
+          '<td><button class="btn danger sm" onclick="removeSecretGame(\'' + esc(g.id) + '\')">Remove</button></td></tr>';
+      });
+      document.getElementById('secret-body').innerHTML = rows || '<tr><td colspan="4" style="opacity:.5">No secret games yet</td></tr>';
+    });
+}
+
+function addSecretGame() {
+  var id    = document.getElementById('sg-id').value.trim();
+  var title = document.getElementById('sg-title').value.trim();
+  var url   = document.getElementById('sg-url').value.trim();
+  var img   = document.getElementById('sg-img').value.trim();
+  var cat   = document.getElementById('sg-cat').value;
+  var msg   = document.getElementById('sg-msg');
+  if (!id || !title || !url) { msg.className = 'err'; msg.textContent = 'ID, title, and URL are required.'; return; }
+  fetch('/api/admin/secret-games/add', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(authBody({ game: { id, title, url, img, cat } })) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        msg.className = 'success'; msg.textContent = 'Game added!';
+        ['sg-id','sg-title','sg-url','sg-img'].forEach(function(x) { document.getElementById(x).value = ''; });
+        loadSecretGames();
+      } else {
+        msg.className = 'err'; msg.textContent = d.error || 'Failed to add game.';
+      }
+    });
+}
+
+function removeSecretGame(id) {
+  if (!confirm('Remove "' + id + '" from secret games?')) return;
+  fetch('/api/admin/secret-games/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(authBody({ id: id })) })
+    .then(function() { loadSecretGames(); });
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
